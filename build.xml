@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- An Ant build file for the Property Offem Management (POM) project -->
+<project name="lead-router" default="all" basedir="../">
+
+
+   <property environment="env"/>
+   <property name="j2ee.dir" value="${env.J2EE_HOME}"/>
+   <property name="classes.dir" value="${basedir}/classes"/>
+   <property name="config.dir" value="${basedir}/resources"/>
+   <property name="dist.dir" value="${basedir}/dist"/>
+   <property name="lib.dir" value="${basedir}/lib"/>
+   <property name="src.dir" value="${basedir}/src"/>
+   <property name="deploy.dir" value="${basedir}/deploy"/>
+
+
+   <!-- Target: generate-classpath -->
+   <path id="classpath">
+      <fileset dir="${lib.dir}">
+         <include name="*.jar"/>
+      	 <include name="*.zip"/>
+      </fileset>
+      <pathelement location="classes"/>
+      <pathelement location="${j2ee.dir}/lib/j2ee.jar"/>
+   </path>
+
+   <!-- Target: init -->
+   <target name="init">
+      <property name="generated.classpath" refid="classpath"/>
+      <echo message="Using Classpath=${generated.classpath}" />
+      <echo message="Using Source directory=${src.dir}" />
+      <echo message="Using Manager Url=${manager.url}" />
+      <echo message="Using Jboss Deploy Dir=${jboss.deploy.dir}" />
+   </target>
+
+
+   <target name="compile" depends="init">
+      <mkdir dir="${classes.dir}"/>
+      <javac srcdir="${src.dir}"
+          destdir="${classes.dir}"
+          debug="on"
+          deprecation="on"
+          optimize="off"
+      >
+         <classpath>
+            <path refid="classpath"/>
+         </classpath>
+      </javac>
+   </target>
+
+
+
+
+
+   <target name="cbu-jar" depends="compile">
+      <mkdir dir="${dist.dir}"/>
+      <jar jarfile="${dist.dir}/cbu.jar">
+         <fileset dir="${classes.dir}">
+             <include name="com/nemoves/cbu/**"/>
+             <include name="com/nemoves/util/**"/>
+             <include name="com/nemoves/geocode/**"/>
+         </fileset>
+      </jar>
+   </target>
+
+   <target name="deploy" depends="cbu-jar">
+      <mkdir dir="${deploy.dir}"/>
+      <mkdir dir="${deploy.dir}/results"/>
+      <copy todir="${deploy.dir}">
+         <fileset dir="${config.dir}"/>
+      </copy>
+      <copy file="${dist.dir}/cbu.jar" todir="${deploy.dir}"/>
+      <!--
+      <copy file="${config.dir}/cbu-config.xml" todir="${deploy.dir}"/>
+      <copy file="${config.dir}/log4j-config.xml" todir="${deploy.dir}"/>
+      <copy file="${config.dir}/configurator.xsd" todir="${deploy.dir}"/>
+      <copy file="${config.dir}/log4j.dtd" todir="${deploy.dir}"/>
+      <copy file="${config.dir}/cbu.bat" todir="${deploy.dir}"/>    
+      <copy file="${config.dir}/log4j-geo.xml" todir="${deploy.dir}"/>
+      <copy file="${config.dir}/geocodes.bat" todir="${deploy.dir}"/>
+      <copy file="${config.dir}/listings.cmd" todir="${deploy.dir}"/>
+      <copy file="${config.dir}/companyareas.cmd" todir="${deploy.dir}"/>
+      <copy file="${config.dir}/agentareas.cmd" todir="${deploy.dir}"/>
+      <copy file="${config.dir}/officesLR.cmd" todir="${deploy.dir}"/>
+      <copy file="${config.dir}/officeareasLR.cmd" todir="${deploy.dir}"/>
+      <copy file="${config.dir}/officephotosLR.cmd" todir="${deploy.dir}"/>
+      <copy file="${config.dir}/languages.cmd" todir="${deploy.dir}"/>
+      <copy file="${config.dir}/openhousesLR.cmd" todir="${deploy.dir}"/>
+      <copy file="${config.dir}/agentsLR.cmd" todir="${deploy.dir}"/>
+      <copy file="${config.dir}/agentphotos.cmd" todir="${deploy.dir}"/>
+      <copy file="${config.dir}/listingphotos.cmd" todir="${deploy.dir}"/>
+      <copy file="${config.dir}/tridentagentids.cmd" todir="${deploy.dir}"/>
+      <copy file="${config.dir}/agentmlsids.cmd" todir="${deploy.dir}"/>
+      <copy file="${config.dir}/officemlsids.cmd" todir="${deploy.dir}"/>
+      <copy file="${config.dir}/listingphotosDaily.cmd" todir="${deploy.dir}"/>
+      <copy file="${config.dir}/listingsDaily.cmd" todir="${deploy.dir}"/>
+      <copy file="${config.dir}/get_tridentagents.cmd" todir="${deploy.dir}"/>
+      <copy file="${config.dir}/listingImagesDaily.cmd" todir="${deploy.dir}"/>
+      <copy file="${config.dir}/specialTask.cmd" todir="${deploy.dir}"/>
+      <copy file="${config.dir}/mapListings.cmd" todir="${deploy.dir}"/>
+      <copy file="${config.dir}/mapListingsActive.cmd" todir="${deploy.dir}"/>
+      <copy file="${config.dir}/mapListingsNonActive.cmd" todir="${deploy.dir}"/>
+      <copy file="${config.dir}/mapReturned.cmd" todir="${deploy.dir}"/>
+      <copy file="${config.dir}/offReturned.cmd" todir="${deploy.dir}"/>
+      <copy file="${config.dir}/agentURLs.cmd" todir="${deploy.dir}"/>
+      <copy file="${config.dir}/mapUnprocessed.cmd" todir="${deploy.dir}"/>
+      -->
+      <copy todir="${deploy.dir}/lib">
+         <fileset dir="${lib.dir}"/>
+      </copy>
+   </target>
+
+   <!-- Target: clean-all -->
+   <target name="clean-all">
+      <delete dir="${dist.dir}"/>
+      <delete dir="${classes.dir}"/>
+      <!--delete dir="${deploy.dir}"/-->
+   </target>
+
+
+
+   <target name="all" depends="deploy"/>
+</project>

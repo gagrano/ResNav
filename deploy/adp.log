@@ -1,0 +1,11 @@
+2014-10-27 15:06:59 INFO  ProcessRN1:37 - Start processing file: C:\documents\resnav\viewpoint-hr-export.csv
+2014-10-27 15:06:59 INFO  ProcessRN1:148 - DONE!
+2014-10-27 15:23:28 INFO  ProcessRN1:145 - Start processing file: C:\documents\resnav\punches.csv
+2014-10-27 15:24:34 INFO  ProcessRN1:37 - Start processing file: C:\documents\resnav\viewpoint-hr-export.csv
+2014-10-27 15:24:34 INFO  ProcessRN1:148 - DONE!
+2014-10-27 15:26:29 INFO  ProcessInterLakes:145 - Start processing file: C:\documents\resnav\punches.csv
+2014-10-27 15:28:44 INFO  ProcessInterLakes:145 - Start processing file: C:\documents\resnav\punches.csv
+2014-10-27 15:28:47 INFO  ProcessInterLakes:216 - DONE!
+2014-11-15 12:36:07 INFO  ProcessSturgeon:54 - Start processing file: C:/documents/resnav/viewpoint-hr-export.csv
+2014-11-15 12:36:07 INFO  ProcessSturgeon:188 - DONE!
+2014-11-15 12:36:07 INFO  StandardFileSystemManager:138 - Using "C:\Users\owner\AppData\Local\Temp\vfs_cache" as temporary files store.
