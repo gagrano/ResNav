@@ -4,12 +4,18 @@
 package com.resnav.adp;
 
 import java.io.File;
-import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Properties;
 
+import org.apache.commons.net.PrintCommandListener;
+import org.apache.commons.net.ftp.FTP;
+import org.apache.commons.net.ftp.FTPClient;
+import org.apache.commons.net.ftp.FTPReply;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemOptions;
 import org.apache.commons.vfs2.Selectors;
@@ -120,5 +126,51 @@ public class ProcessRN {
 	 
 		return true;
 	 }
+	
+	/**
+	 * when we need to download input file for processing
+	 * @param props
+	 * @param suffix
+	 * @return
+	 */
+	public static String downloadFileFromFTP(Properties props, String suffix) {
+		String result = null;
+		String ftpHost = props.getProperty("ftpHost"+suffix).trim();
+	    String ftpUser = props.getProperty("ftpUser"+suffix).trim();
+	    String ftpPassword = props.getProperty("ftpPassword"+suffix).trim();
+	    String ftpDirectory = props.getProperty("ftpDirectory"+suffix).trim();
+	    String ftpFile = props.getProperty("ftpFile"+suffix).trim();
+	    String downloadPath = props.getProperty("inputPath"+suffix).trim();
+	    FTPClient ftp = new FTPClient();
+        ftp.addProtocolCommandListener(new PrintCommandListener(new PrintWriter(System.out)));
+        int reply;
+        try {
+	        ftp.connect(ftpHost);
+	        reply = ftp.getReplyCode();
+	        if (!FTPReply.isPositiveCompletion(reply)) {
+	            ftp.disconnect();
+	            throw new Exception("Exception in connecting to FTP Server");
+	        }
+	        ftp.login(ftpUser, ftpPassword);
+	        ftp.setFileType(FTP.BINARY_FILE_TYPE);
+	        ftp.enterLocalPassiveMode();
+        } catch (IOException ex) {
+        	ex.printStackTrace();
+        } catch (Exception e) {
+        	e.printStackTrace();
+        }
+        result = ftpFile;
+        try (FileOutputStream fos = new FileOutputStream(downloadPath+"/"+ftpFile)) {
+        	String remoteFilePath = "";
+        	if (ftpDirectory.length() > 0) remoteFilePath += ftpDirectory + "/";
+        	remoteFilePath += ftpFile;
+            ftp.retrieveFile(remoteFilePath, fos);
+            ftp.logout();
+            ftp.disconnect();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+		return result;
+	}
 
 }

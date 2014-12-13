@@ -6,6 +6,7 @@ package com.resnav.adp;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -37,18 +38,29 @@ public class ProcessSturgeon extends ProcessRN {
 			}
 			InputStream is = new FileInputStream(args[0]);
 	        props.load(is);
-	        System.out.println("Property inputFileRN2:"+ props.getProperty("inputFileRN1"));
-			String inputFile = props.getProperty("inputFileRN1", "viewpoint-hr-export.csv") ;
+	        
+			String inputFile = props.getProperty("inputFileRN1", "PRG9GEPI.csv") ;
 			String inputPath = props.getProperty("inputPathRN1");
 			String outputDir = props.getProperty("outputPathRN1", "Sturgeon");
 			String outputFile = props.getProperty("outputFileRN1");
             is.close();
-            String fileName = ProcessSturgeon.run(inputPath +"/"+inputFile, outputFile, outputDir);
-            ProcessSturgeon.sendToSFTP(props, fileName);
+            inputFile = downloadFileFromFTP(props, "RN1");
+            System.out.println("Downloaded inputFileRN1:"+ inputFile);
+            SimpleDateFormat sdf = new SimpleDateFormat("MMddyyyy");
+    		String dateStr = sdf.format(System.currentTimeMillis());
+    		String fileNameBase = inputFile.substring(0, inputFile.indexOf("."));
+    		String fileExt = inputFile.substring(inputFile.indexOf(".")+1);
+    		String fullFileName = inputPath+"/"+fileNameBase+ "-"+dateStr+ "."+fileExt;
+    		File origFile = new File(inputPath +"/"+inputFile);
+    		origFile.renameTo(new File(fullFileName));
+    		System.out.println("Downloaded fullFileName:"+ fullFileName);
+            String fileName = ProcessSturgeon.run(fullFileName, outputFile, outputDir);
+           // ProcessSturgeon.sendToSFTP(props, fileName);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
+	
 	
 	public static String run(String inputFile, String outputFile, String outputDir) {
 		logger.info("Start processing file: "+inputFile);
@@ -161,7 +173,7 @@ public class ProcessSturgeon extends ProcessRN {
 		    		else if (maidName.equals("N")) rowlist.add("Not Eligible for Rehire");
 		    		else rowlist.add("");
 		    		
-		    		if (nextLine[eduLevelIdx].equals("Y")) rowlist.add("Physical Completed");
+		    		if (nextLine[eduLevelIdx].equals("Y")) rowlist.add("PCM");
 		    		else rowlist.add("");
 		    		
 		    		String handicap = nextLine[handicapIdx];
@@ -190,13 +202,42 @@ public class ProcessSturgeon extends ProcessRN {
 		    	//System.out.println();
 		    }
 		    reader.close();
-		    result = createCSVOutput(outputFile, outputDir, alist);
+		    result = ProcessSturgeon.createCSVOutput(outputFile, outputDir, alist);
 		    logger.info("DONE!");
 		} catch (Exception e) {
 			e.printStackTrace();
 			logger.error("Error:"+ e.getMessage());
 		}
 		return result;
+	}
+	
+	public static String createCSVOutput(String fileName, String folder, ArrayList<ArrayList<Object>> alist) throws Exception {
+		//SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+		//String dateStr = sdf.format(System.currentTimeMillis());
+		//String fileNameBase = fileName.substring(0, fileName.indexOf("."));
+		//String fileExt = fileName.substring(fileName.indexOf(".")+1);
+		String fullFileName = folder+"/"+fileName;
+		/*
+		File f = new File(fullFileName);
+		int suffix = 0;
+		while (f.exists()) {
+			suffix++;
+			//fileNameBase += "#";
+			fullFileName = folder+"/"+dateStr+ "_"+fileNameBase+"_"+suffix+"."+fileExt;
+			f = new File(fullFileName);
+		}
+		*/
+		FileWriter fw = new FileWriter(fullFileName);
+        for (ArrayList<Object> row: alist) {
+        	for (int i=0; i< row.size(); i++) {
+        		fw.write(row.get(i).toString());
+        		if (i< row.size()-1) fw.write(",");
+        	}
+        	fw.write("\r\n");
+        }
+        fw.close();
+        System.out.println("Created file: "+fullFileName);
+        return fullFileName;
 	}
 	
 
