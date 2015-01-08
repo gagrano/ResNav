@@ -5,11 +5,15 @@ package com.resnav.adp;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.InputStream;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Properties;
 
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVRecord;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 import org.apache.poi.ss.usermodel.Cell;
@@ -40,6 +44,7 @@ public class ProcessInterLakes extends ProcessRN {
 		BasicConfigurator.configure();
 		Properties props = new Properties();
 		try {
+			//ProcessInterLakes.run1();
 			if (args == null && args.length < 1) {
 				System.out.println("Please, provide properties file");
 			    return;	
@@ -119,20 +124,26 @@ public class ProcessInterLakes extends ProcessRN {
 	 
 		System.out.println("Done");
 	  }
-	
-	public void run1() {
+	**/
+	public static void run1() {
 		try {
 		//	File file = new File("C:/documents/resnav/punches.xlsx");
 		//	FileInputStream fis = new FileInputStream(file);
 		//	final Reader reader = new InputStreamReader(fis, "UTF-8");
 		//	final CSVParser parser = new CSVParser(reader, CSVFormat.EXCEL.withHeader());
 
-		    Reader in = new FileReader("C:/documents/resnav/punches.xlsx");
+		    Reader in = new FileReader("C:/documents/ResNav/InterLakes/MPunches.csv");
 		Iterable<CSVRecord> records = CSVFormat.EXCEL.parse(in);
 		int recNum = 0;
+		int empIdx =-1, regHrIdx=-1, rateIdx=-1;
+        int tiDeptIdx = -1, tiCostIdx = -1, tiOTT1Idx = -1, tiOTT2Idx = -1, tiShftIdx = -1;
 		for (final CSVRecord record : records) {
+			if (recNum ==0) {
+				for (int i=0; i<record.size(); i++) {
+					
+				}
+			}
 	        final String t1 = record.get(0);
-
 		    String t2 = "";
 		    System.out.println("Rec #"+recNum+", Code "+t1+":" + t2);
 		    recNum++;
@@ -143,7 +154,7 @@ public class ProcessInterLakes extends ProcessRN {
 			e.printStackTrace();
 		}
 	}
-	**/
+	
 	public static String run(String inputFile, String outputFile, String outputDir) {
 		String result = "FAIL";
 		try {
@@ -172,11 +183,15 @@ public class ProcessInterLakes extends ProcessRN {
         	rowlist.add("Batch ID");
         	rowlist.add("File #");
         	rowlist.add("Reg Hours");
-        	rowlist.add("O/T Hours");
         	rowlist.add("Temp Rate");
-        	rowlist.add("");rowlist.add("");rowlist.add("");rowlist.add("");
+        	rowlist.add("Temp Cost Number");
+        	rowlist.add("O/T Hours");
+        	rowlist.add("Hours 3 Code");
+        	rowlist.add("Hours 3 Amount");
+        	rowlist.add("Shift");
         	alist.add(rowlist);
-            int empIdx =-1, regHrIdx=-1, rateIdx=-1, flsaOtIdx =-1;
+            int empIdx =-1, regHrIdx=-1, rateIdx=-1;
+            int tiDeptIdx = -1, tiCostIdx = -1, tiOTT1Idx = -1, tiOTT2Idx = -1, tiShftIdx = -1;
             while (rowIterator.hasNext())
             {
                 Row row = rowIterator.next();
@@ -204,31 +219,42 @@ public class ProcessInterLakes extends ProcessRN {
 	                            break;
 	                    }
                     	switch (strValue){
-                    		case "TIEMPN": empIdx = index; break;
-                    		case "TIPRAT": rateIdx = index; break;
+                    		case "TIBADG": empIdx = index; break;
+                    		case "TIDEPT": tiDeptIdx = index; break;
+                    		case "TICOST": tiCostIdx = index; break;
+                    		case "TIPRAT": rateIdx = index; break; //temp rate
                     		case "TIREGH": regHrIdx = index; break;
-                    		case "TIOTT1": flsaOtIdx = index; break;
+                    		case "TIOTT1": tiOTT1Idx = index; break;
+                    		case "TIOTT2": tiOTT2Idx = index; break;
+                    		case "TISHFT": tiShftIdx = index; break;
                     		default: continue;	                    	
 	                    } 		                    
 	                }   
 	                //System.out.println("");
                 } else {
                 	rowlist.add("KWE");
-                	rowlist.add("RN2");
+                	rowlist.add("RNKWE");
                 	int empId = (int) row.getCell(empIdx).getNumericCellValue();
                 	rowlist.add(empId+"");
                 	Cell c = row.getCell(regHrIdx);
-                	if (c.getNumericCellValue() == 0.0) rowlist.add("0");
-                	else rowlist.add(c.getNumericCellValue());
-                	
-                	c = row.getCell(flsaOtIdx);
-                	if (c.getNumericCellValue() == 0.0) rowlist.add("0");
-                	else rowlist.add(c.getNumericCellValue());
-                	
+                	rowlist.add(c.getNumericCellValue() == 0.0? "0": c.getNumericCellValue());
+                	//temp rate
                 	c = row.getCell(rateIdx);
-                	if (c.getNumericCellValue() == 0.0) rowlist.add("0");
-                	else rowlist.add(c.getNumericCellValue());
-                	rowlist.add("");rowlist.add("");rowlist.add("");rowlist.add("");
+                	rowlist.add(c.getNumericCellValue() == 0.0? "": c.getNumericCellValue());
+                	//tempCost Number
+                	rowlist.add(row.getCell(tiDeptIdx).getStringCellValue()+row.getCell(tiCostIdx).getStringCellValue());
+                	
+                	c = row.getCell(tiOTT1Idx);
+                	rowlist.add(c.getNumericCellValue() == 0.0? "0": c.getNumericCellValue());
+
+                	rowlist.add("DT");
+                	
+                	c = row.getCell(tiOTT2Idx);
+                	rowlist.add(c.getNumericCellValue() == 0.0? "0": c.getNumericCellValue());
+                	
+                	c = row.getCell(tiShftIdx);
+                	rowlist.add(c.getStringCellValue().trim().equals("1")? "": c.getStringCellValue());
+
                 	alist.add(rowlist);
                 }     
             }//while row iterator
