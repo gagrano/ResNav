@@ -132,7 +132,7 @@ public class ProcessInterLakes extends ProcessRN {
 		//	final Reader reader = new InputStreamReader(fis, "UTF-8");
 		//	final CSVParser parser = new CSVParser(reader, CSVFormat.EXCEL.withHeader());
 
-		    Reader in = new FileReader("C:/documents/ResNav/InterLakes/MPunches.csv");
+		Reader in = new FileReader("C:/documents/ResNav/InterLakes/MPunches.csv");
 		Iterable<CSVRecord> records = CSVFormat.EXCEL.parse(in);
 		int recNum = 0;
 		int empIdx =-1, regHrIdx=-1, rateIdx=-1;
@@ -165,6 +165,19 @@ public class ProcessInterLakes extends ProcessRN {
 				return result;
 			}
 			logger.info("Start processing file: "+inputFile);
+			ArrayList<ArrayList<Object>> alist = new ArrayList<ArrayList<Object>>();
+            ArrayList<Object> rowlist = new ArrayList<Object>();
+            rowlist.add("Co Code");
+        	rowlist.add("Batch ID");
+        	rowlist.add("File #");
+        	rowlist.add("Reg Hours");
+        	//rowlist.add("Temp Rate");
+        	rowlist.add("Temp Cost Number");
+        	rowlist.add("O/T Hours");
+        	rowlist.add("Hours 3 Code");
+        	rowlist.add("Hours 3 Amount");
+        	rowlist.add("Shift");
+        	alist.add(rowlist);
             FileInputStream file = new FileInputStream(f);
  
             //Create Workbook instance holding reference to .xlsx file
@@ -172,93 +185,87 @@ public class ProcessInterLakes extends ProcessRN {
  
             //Get first/desired sheet from the workbook
             //XSSFSheet sheet = workbook.getSheetAt(0);
-            
-            Workbook workbook = WorkbookFactory.create(file);
-            Sheet sheet = workbook.getSheetAt(0);
-            //Iterate through each rows one by one
-            Iterator<Row> rowIterator = sheet.iterator();
-            ArrayList<ArrayList<Object>> alist = new ArrayList<ArrayList<Object>>();
-            ArrayList<Object> rowlist = new ArrayList<Object>();
-            rowlist.add("Co Code");
-        	rowlist.add("Batch ID");
-        	rowlist.add("File #");
-        	rowlist.add("Reg Hours");
-        	rowlist.add("Temp Rate");
-        	rowlist.add("Temp Cost Number");
-        	rowlist.add("O/T Hours");
-        	rowlist.add("Hours 3 Code");
-        	rowlist.add("Hours 3 Amount");
-        	rowlist.add("Shift");
-        	alist.add(rowlist);
-            int empIdx =-1, regHrIdx=-1, rateIdx=-1;
-            int tiDeptIdx = -1, tiCostIdx = -1, tiOTT1Idx = -1, tiOTT2Idx = -1, tiShftIdx = -1;
-            while (rowIterator.hasNext())
-            {
-                Row row = rowIterator.next();
-                //For each row, iterate through all the columns
-                int rowNum = row.getRowNum();
-                Iterator<Cell> cellIterator = row.cellIterator();
-                //System.out.print("Row#"+row.getRowNum()+":");
-                rowlist = new ArrayList<Object>();
-                if (rowNum == 0) {
-	                while (cellIterator.hasNext())
-	                {
-	                    Cell cell = cellIterator.next();
-	                    int index = cell.getColumnIndex();
-	                    double dbValue = 0;
-	                    String strValue = "";
-	                    switch (cell.getCellType())
-	                    {
-	                        case Cell.CELL_TYPE_NUMERIC:
-	                        	dbValue = cell.getNumericCellValue();
-	                            //System.out.print("[N"+index+"]"+dbValue + ",");
-	                            break;
-	                        case Cell.CELL_TYPE_STRING:
-	                        	strValue = cell.getStringCellValue();
-	                            //System.out.print("[S"+index+"]"+strValue + ",");
-	                            break;
-	                    }
-                    	switch (strValue){
-                    		case "TIBADG": empIdx = index; break;
-                    		case "TIDEPT": tiDeptIdx = index; break;
-                    		case "TICOST": tiCostIdx = index; break;
-                    		case "TIPRAT": rateIdx = index; break; //temp rate
-                    		case "TIREGH": regHrIdx = index; break;
-                    		case "TIOTT1": tiOTT1Idx = index; break;
-                    		case "TIOTT2": tiOTT2Idx = index; break;
-                    		case "TISHFT": tiShftIdx = index; break;
-                    		default: continue;	                    	
-	                    } 		                    
-	                }   
-	                //System.out.println("");
-                } else {
-                	rowlist.add("KWE");
-                	rowlist.add("RNKWE");
-                	int empId = (int) row.getCell(empIdx).getNumericCellValue();
-                	rowlist.add(empId+"");
-                	Cell c = row.getCell(regHrIdx);
-                	rowlist.add(c.getNumericCellValue() == 0.0? "0": c.getNumericCellValue());
-                	//temp rate
-                	c = row.getCell(rateIdx);
-                	rowlist.add(c.getNumericCellValue() == 0.0? "": c.getNumericCellValue());
-                	//tempCost Number
-                	rowlist.add(row.getCell(tiDeptIdx).getStringCellValue()+row.getCell(tiCostIdx).getStringCellValue());
-                	
-                	c = row.getCell(tiOTT1Idx);
-                	rowlist.add(c.getNumericCellValue() == 0.0? "0": c.getNumericCellValue());
-
-                	rowlist.add("DT");
-                	
-                	c = row.getCell(tiOTT2Idx);
-                	rowlist.add(c.getNumericCellValue() == 0.0? "0": c.getNumericCellValue());
-                	
-                	c = row.getCell(tiShftIdx);
-                	rowlist.add(c.getStringCellValue().trim().equals("1")? "": c.getStringCellValue());
-
-                	alist.add(rowlist);
-                }     
-            }//while row iterator
-            file.close();
+            try {
+            	Workbook workbook = WorkbookFactory.create(file);
+	            Sheet sheet = workbook.getSheetAt(0);
+	            //Iterate through each rows one by one
+	            Iterator<Row> rowIterator = sheet.iterator();
+	            
+	            int empIdx =-1, regHrIdx=-1, codeIdx=-1, retm1Idx=-1;
+	            int tiDeptIdx = -1, tiCostIdx = -1, tiOTT1Idx = -1, tiOTT2Idx = -1, tiShftIdx = -1;
+	            while (rowIterator.hasNext())
+	            {
+	                Row row = rowIterator.next();
+	                //For each row, iterate through all the columns
+	                int rowNum = row.getRowNum();
+	                Iterator<Cell> cellIterator = row.cellIterator();
+	                //System.out.print("Row#"+row.getRowNum()+":");
+	                rowlist = new ArrayList<Object>();
+	                if (rowNum == 0) {
+		                while (cellIterator.hasNext())
+		                {
+		                    Cell cell = cellIterator.next();
+		                    int index = cell.getColumnIndex();
+		                    double dbValue = 0;
+		                    String strValue = "";
+		                    switch (cell.getCellType())
+		                    {
+		                        case Cell.CELL_TYPE_NUMERIC:
+		                        	dbValue = cell.getNumericCellValue();
+		                            //System.out.print("[N"+index+"]"+dbValue + ",");
+		                            break;
+		                        case Cell.CELL_TYPE_STRING:
+		                        	strValue = cell.getStringCellValue();
+		                            //System.out.print("[S"+index+"]"+strValue + ",");
+		                            break;
+		                    }
+	                    	switch (strValue){
+	                    		case "TPBADG": empIdx = index; break;
+	                    		case "TPDEPT": tiDeptIdx = index; break;
+	                    		case "TPCOST": tiCostIdx = index; break;
+	                    		case "TPCODE": codeIdx = index; break; //temp rate
+	                    		case "TPREGH": regHrIdx = index; break;
+	                    		case "TPOTT1": tiOTT1Idx = index; break;
+	                    		case "TPOTT2": tiOTT2Idx = index; break;
+	                    		case "TPSHFT": tiShftIdx = index; break;
+	                    		case "TPRETM1": retm1Idx = index; break;
+	                    		default: continue;	                    	
+		                    } 		                    
+		                }   
+	                } else {
+	                	rowlist.add("KWE");
+	                	rowlist.add("RNKWE");
+	                	int empId = (int) row.getCell(empIdx).getNumericCellValue();
+	                	rowlist.add(empId+"");
+	                	Cell c = row.getCell(regHrIdx);
+	                	rowlist.add(c.getNumericCellValue() == 0.0? "0": c.getNumericCellValue());
+	                	//temp rate
+	                	//c = row.getCell(rateIdx);
+	                	//rowlist.add(c.getNumericCellValue() == 0.0? "": c.getNumericCellValue());
+	                	//tempCost Number
+	                	rowlist.add(row.getCell(tiDeptIdx).getStringCellValue()+row.getCell(tiCostIdx).getStringCellValue());
+	                	
+	                	c = row.getCell(tiOTT1Idx);
+	                	rowlist.add(c.getNumericCellValue() == 0.0? "0": c.getNumericCellValue());
+	                	//TODO change this
+	                	rowlist.add("DT");
+	                	
+	                	c = row.getCell(tiOTT2Idx);
+	                	rowlist.add(c.getNumericCellValue() == 0.0? "0": c.getNumericCellValue());
+	                	
+	                	c = row.getCell(tiShftIdx);
+	                	rowlist.add(c.getStringCellValue().trim().equals("1")? "": c.getStringCellValue());
+	
+	                	alist.add(rowlist);
+	                }     
+	            }//while row iterator
+	            file.close();
+            } catch (Exception e) {
+            	logger.error("Error:"+ e.getMessage());
+            	logger.info("Processing file with Apache Commons...");
+            	processOtherCSV(inputFile, alist); 
+            	logger.info("Finished Processing file with Apache Commons!");
+            }
             result = createCSVOutput(outputFile, outputDir, alist);
             logger.info("DONE!");
         }
@@ -273,6 +280,54 @@ public class ProcessInterLakes extends ProcessRN {
 		return result;
 	}
 	
-	
+	private static void processOtherCSV(String inputFile, ArrayList<ArrayList<Object>> alist) throws Exception {
+		Reader in = new FileReader(inputFile);
+		Iterable<CSVRecord> records = CSVFormat.EXCEL.parse(in);
+		int recNum = 0;
+		int empIdx =-1, regHrIdx=-1, rateIdx=-1;
+        int tiDeptIdx = -1, tiCostIdx = -1, tiOTT1Idx = -1, tiOTT2Idx = -1, tiShftIdx = -1;
+		for (final CSVRecord record : records) {
+			if (recNum ==0) {
+				for (int index=0; index<record.size(); index++) {
+					String strValue = record.get(index);
+					switch (strValue){
+	            		case "TPBADG": empIdx = index; break;
+	            		case "TPDEPT": tiDeptIdx = index; break;
+	            		case "TPCOST": tiCostIdx = index; break;
+	            		//case "TPPRAT": rateIdx = index; break; //temp rate
+	            		case "TPREGH": regHrIdx = index; break;
+	            		case "TPOTT1": tiOTT1Idx = index; break;
+	            		case "TPOTT2": tiOTT2Idx = index; break;
+	            		case "TPSHFT": tiShftIdx = index; break;
+	            		default: continue;	                    	
+					} 		               
+				}
+			} else {
+				ArrayList<Object> rowlist = new ArrayList<Object>();
+				rowlist.add("KWE");
+            	rowlist.add("RNKWE");
+            	
+            	rowlist.add(record.get(empIdx));
+            	rowlist.add(record.get(regHrIdx));
+            	//temp rate
+            	//String tempRate = record.get(rateIdx);
+            	//rowlist.add(tempRate.trim().equals("0")? "": tempRate);
+            	//tempCost Number
+            	rowlist.add(record.get(tiDeptIdx)+record.get(tiCostIdx));
+
+            	rowlist.add(record.get(tiOTT1Idx));
+            	rowlist.add("DT");
+            	rowlist.add(record.get(tiOTT2Idx));
+            	
+            	String shift = record.get(tiShftIdx);
+            	rowlist.add(shift.trim().equals("1")? "": shift);
+
+            	alist.add(rowlist);
+			}
+		    recNum++;
+		}
+		in.close();
+		//fis.close();		
+	}
 
 }

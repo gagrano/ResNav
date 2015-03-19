@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!-- An Ant build file for the Property Offem Management (POM) project -->
-<project name="lead-router" default="all" basedir="../">
+<project name="resnav" default="all" basedir=".">
 
 
    <property environment="env"/>
-   <property name="j2ee.dir" value="${env.J2EE_HOME}"/>
+   <property name="java.dir" value="${env.JAVA_HOME}"/>
    <property name="classes.dir" value="${basedir}/classes"/>
-   <property name="config.dir" value="${basedir}/resources"/>
+   <!--property name="config.dir" value="${basedir}/resources"/-->
    <property name="dist.dir" value="${basedir}/dist"/>
    <property name="lib.dir" value="${basedir}/lib"/>
    <property name="src.dir" value="${basedir}/src"/>
@@ -17,10 +17,9 @@
    <path id="classpath">
       <fileset dir="${lib.dir}">
          <include name="*.jar"/>
-      	 <include name="*.zip"/>
       </fileset>
       <pathelement location="classes"/>
-      <pathelement location="${j2ee.dir}/lib/j2ee.jar"/>
+      <!-- pathelement location="${java.dir}"/ -->
    </path>
 
    <!-- Target: init -->
@@ -29,7 +28,6 @@
       <echo message="Using Classpath=${generated.classpath}" />
       <echo message="Using Source directory=${src.dir}" />
       <echo message="Using Manager Url=${manager.url}" />
-      <echo message="Using Jboss Deploy Dir=${jboss.deploy.dir}" />
    </target>
 
 
@@ -40,6 +38,7 @@
           debug="on"
           deprecation="on"
           optimize="off"
+          compiler="javac1.7"
       >
          <classpath>
             <path refid="classpath"/>
@@ -51,24 +50,22 @@
 
 
 
-   <target name="cbu-jar" depends="compile">
+   <target name="resnav-jar" depends="compile">
       <mkdir dir="${dist.dir}"/>
-      <jar jarfile="${dist.dir}/cbu.jar">
+      <jar jarfile="${dist.dir}/resnav.jar">
          <fileset dir="${classes.dir}">
-             <include name="com/nemoves/cbu/**"/>
-             <include name="com/nemoves/util/**"/>
-             <include name="com/nemoves/geocode/**"/>
+             <include name="com/resnav/adp/**"/>
          </fileset>
       </jar>
    </target>
 
-   <target name="deploy" depends="cbu-jar">
+   <target name="deploy" depends="resnav-jar">
       <mkdir dir="${deploy.dir}"/>
-      <mkdir dir="${deploy.dir}/results"/>
-      <copy todir="${deploy.dir}">
+      <!--copy todir="${deploy.dir}">
          <fileset dir="${config.dir}"/>
-      </copy>
-      <copy file="${dist.dir}/cbu.jar" todir="${deploy.dir}"/>
+      </copy-->
+      <copy file="${dist.dir}/resnav.jar" todir="${deploy.dir}"/>
+      <copy file="adp.properties" todir="${deploy.dir}"/>
       <!--
       <copy file="${config.dir}/cbu-config.xml" todir="${deploy.dir}"/>
       <copy file="${config.dir}/log4j-config.xml" todir="${deploy.dir}"/>
@@ -107,6 +104,12 @@
       <copy todir="${deploy.dir}/lib">
          <fileset dir="${lib.dir}"/>
       </copy>
+   </target>
+   
+   <target name="zip-prod" depends="deploy">
+   		<zip destfile="${dist.dir}/resnav.zip"
+       basedir="${deploy.dir}"
+        />
    </target>
 
    <!-- Target: clean-all -->

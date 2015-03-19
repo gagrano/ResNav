@@ -38,14 +38,19 @@ public class ProcessSturgeon extends ProcessRN {
 			}
 			InputStream is = new FileInputStream(args[0]);
 	        props.load(is);
-	        
+	        boolean useFTP = true;
+	        if (args.length > 1) {
+	        	useFTP = Boolean.parseBoolean(args[1]);
+	        }
+	        logger.info("useFTP:" +useFTP);
 			String inputFile = props.getProperty("inputFileRN1", "PRG9GEPI.csv") ;
 			String inputPath = props.getProperty("inputPathRN1");
 			String outputDir = props.getProperty("outputPathRN1", "Sturgeon");
 			String outputFile = props.getProperty("outputFileRN1");
             is.close();
-            inputFile = downloadFileFromFTP(props, "RN1");
+            if (useFTP) inputFile = downloadFileFromFTP(props, "RN1");
             System.out.println("Downloaded inputFileRN1:"+ inputFile);
+            
             SimpleDateFormat sdf = new SimpleDateFormat("MMddyyyy");
     		String dateStr = sdf.format(System.currentTimeMillis());
     		String fileNameBase = inputFile.substring(0, inputFile.indexOf("."));
@@ -54,8 +59,12 @@ public class ProcessSturgeon extends ProcessRN {
     		File origFile = new File(inputPath +"/"+inputFile);
     		origFile.renameTo(new File(fullFileName));
     		System.out.println("Downloaded fullFileName:"+ fullFileName);
+    		
             String fileName = ProcessSturgeon.run(fullFileName, outputFile, outputDir);
-           // ProcessSturgeon.sendToSFTP(props, fileName);
+            ProcessSturgeon.sendToSFTP(props, fileName);
+            String resultFile = renameOutputFile(fileName);
+            System.out.println("<><><> Output Processed fullFileName:"+ resultFile);
+            
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -80,7 +89,7 @@ public class ProcessSturgeon extends ProcessRN {
 		    int rowNum = 0;
 		    ArrayList<ArrayList<Object>> alist = new ArrayList<ArrayList<Object>>();
             ArrayList<Object> rowlist = new ArrayList<Object>();
-            rowlist.add("Co Code");
+            rowlist.add("Position ID");
             rowlist.add("Employee ID");
             rowlist.add("Change Effective On");
         	rowlist.add("Last Name");
@@ -112,9 +121,10 @@ public class ProcessSturgeon extends ProcessRN {
         	rowlist.add("Preferred Name");
         	rowlist.add("Work Mail Stop");
         	rowlist.add("Employee Type");
+        	rowlist.add("Location Code");
         	alist.add(rowlist);
         	int empIdx =-1, maidNameIdx=-1, handicapIdx=-1, disVetIdx = -1, eduLevelIdx =-1, prefNameIdx= -1, mailStopIdx = -1, empTypeIdx = -1;
-        	int emailIdx = -1, earnCodeIdx = -1;
+        	int emailIdx = -1, earnCodeIdx = -1, pdDeptIdx = -1;
 		    while ((nextLine = reader.readNext()) != null) {
 		        // nextLine[] is an array of values from the line
 		    	if (rowNum == 0) {
@@ -132,13 +142,14 @@ public class ProcessSturgeon extends ProcessRN {
 		    				case "TempWorker": empTypeIdx = i; break;
 		    				case "Email": emailIdx = i; break;
 		    				case "EarnCode": earnCodeIdx = i; break;
+		    				case "PRDept": pdDeptIdx = i; break;
 		    				default: continue;
 		    			} 
 			    	}
 		    	} else {
 		    		rowlist = new ArrayList<Object>();
-		    		rowlist.add("G9G");
-		    		rowlist.add(nextLine[empIdx]);
+		    		rowlist.add("G9G0"+nextLine[empIdx]+"N");
+		    		rowlist.add(nextLine[empIdx]+"N"); //empId+N
 		    		String hireDateInput = nextLine[21];
 		    		String hireDate = hireDateInput.equals("")? "": hireDateInput.substring(0, hireDateInput.indexOf(" "));
 		    		rowlist.add(hireDate);//hire-date - Change Effective on
@@ -196,6 +207,8 @@ public class ProcessSturgeon extends ProcessRN {
 		    		if (nextLine[empTypeIdx].equals("Y")) rowlist.add("TEMP");
 		    		else if (nextLine[empTypeIdx].equals("N")) rowlist.add("N");
 		    		else rowlist.add("");
+		    		rowlist.add(nextLine[pdDeptIdx]);
+		    		
 		    		alist.add(rowlist);
 		    	}
 		    	rowNum++;
@@ -236,8 +249,25 @@ public class ProcessSturgeon extends ProcessRN {
         	fw.write("\r\n");
         }
         fw.close();
-        System.out.println("Created file: "+fullFileName);
+        System.out.println(">>>Created file: "+fullFileName);
         return fullFileName;
+	}
+	
+	private static String renameOutputFile(String fileName) {
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+		String dateStr = sdf.format(System.currentTimeMillis());
+		String fileExt = fileName.substring(fileName.indexOf(".")+1);
+
+		String fileNameBase = fileName.substring(0, fileName.lastIndexOf("/"));
+		String name = fileName.substring(fileName.lastIndexOf("/")+1, fileName.indexOf("."));
+		String resultFileName = fileNameBase+"/"+dateStr+"_"+name+"."+fileExt;
+		File f = new File(fileName);
+		if (f.exists()) {
+			f.renameTo(new File(resultFileName));
+			return resultFileName;
+		}
+		return null;
+		
 	}
 	
 

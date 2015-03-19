@@ -93,17 +93,17 @@ public class ProcessRN {
 		 
 		   //Initializes the file manager
 		   manager.init();
-		    
+		   String prefixUnderscore = (prefix != null && prefix.length() > 1) ? prefix +"_" : "";
 		   //Setup our SFTP configuration
 		   FileSystemOptions opts = new FileSystemOptions();
 		   SftpFileSystemConfigBuilder.getInstance().setStrictHostKeyChecking(
 		     opts, "no");
 		   SftpFileSystemConfigBuilder.getInstance().setUserDirIsRoot(opts, true);
 		   SftpFileSystemConfigBuilder.getInstance().setTimeout(opts, 10000);
-		    
+		   
 		   //Create the SFTP URI using the host name, userid, password,  remote path and file name
 		   String sftpUri = "sftp://" + userId + ":" + password +  "@" + serverAddress + "/" +
-				   			remoteDirectory + prefix +"_"+ fileName;
+				   			remoteDirectory + prefixUnderscore + fileName;
 		    
 		   // Create local file object
 		   FileObject localFile = manager.resolveFile(file.getAbsolutePath());
